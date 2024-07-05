@@ -1,6 +1,6 @@
-# Support ticket management system services
+# Support ticket system
 
-### Use-case for Go
+### Use-case
 
 - API - gin, graphQL
 - Real-time notifications - websockets
