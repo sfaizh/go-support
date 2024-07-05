@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/sfaizh/ticket-management-system/internal/app/ticket"
+	"github.com/sfaizh/ticket-management-system/internal/ticket"
 )
 
 func main() {
