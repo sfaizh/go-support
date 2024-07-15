@@ -1,21 +1,32 @@
 package ticket
 
 import (
-  "flag"
-	"github.com/sfaizh/ticket-management-system/internal/structs/defaults"
+  "time"
+  //"strconv"
+  //"sort"
+	//"github.com/sfaizh/ticket-management-system/internal/structs/defaults"
+	"github.com/sfaizh/ticket-management-system/internal/structs"
 )
 
-var (
-  port = flag.Uint("port", uint(defaults.ServerPort), "server `port`")
-  tickets = flag.String("tickets", defaults.ServerTickets, "tickets `directory`")
-  users = flag.String("users", defaults.ServerUsers, "users `file`")
-  emails = flag.String("mails", defaults.ServerEmails, "mails `directory")
-  verbose = flag.Bool("verbose", defaults.LogVerbose, "verbose logs")
-  logLevel = flag.String("logLevel", defaults.LogLevel, "logs verbosity either 'info' | 'debug'")
-)
+// Create a new ticket - requester is an email address
+func CreateTicket(requester, subject, text string) structs.Ticket {
+  // create new entry
+  entry := structs.Entry {
+    Time: time.Now(),
+    User: requester,
+    Text: text,
+  }
 
-func PrintPtr(iptr int) *int {
-	return &iptr
+  var entries []structs.Entry
+  entries = append(entries, entry)
+
+  // return the ticket
+  return structs.Ticket{
+    ID: "0",
+    Subject: subject,
+    Status: structs.New,
+    User: structs.User{},
+    Requester: requester,
+    Entries: entries,
+  }
 }
-
- 

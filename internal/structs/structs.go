@@ -5,34 +5,54 @@
 package structs
 
 import (
-  "strconv"
-  "time"
+	"net"
+	"strconv"
+	"time"
 )
 
 type ServerConfig struct {
-  // port the server is listening on
-  Port uint16
+	// port the server is listening on
+	Port uint16
 
-  // directory tickets are stored to
-  Tickets string
+	// directory tickets are stored to
+	Tickets string
 
-  // path to users.json 
-  Users string
-  
-  // path to mails
-  EmailPath string
+	// path to users.json
+	Users string
+
+	// path to mails
+	EmailPath string
+}
+
+type Request struct {
+	Requester []byte
+	// Subject   string
+	// Text      string
+}
+
+type Message struct {
+	From    string
+	Payload []byte
+}
+
+type Server struct {
+	ListenAddr string
+	Ln         net.Listener
+	QuitCh     chan struct{}
+	Msg        chan Message
+	Req        chan Request
 }
 
 // provides the CLI config parameters set on startup
 type CLIConfig struct {
-  Host string
-  Port uint16
+	Host string
+	Port uint16
 }
 
 // provides logging configuration flags set on startup
 type LogConfig struct {
-  LogLevel LogLevel
-  Verbose bool
+	LogLevel LogLevel
+	Verbose  bool
 }
 
 const TicketIdLength int = 10
@@ -41,110 +61,122 @@ const TicketIdLength int = 10
 type LogLevel int
 
 const (
-  LevelInfo LogLevel = iota
-  LevelDebug
+	LevelInfo LogLevel = iota
+	LevelDebug
 )
 
 // converts a log level to corresponding output string which will be used in the log
 func (level LogLevel) String() string {
-  switch level {
-  case LevelInfo:
-    return "[INFO]"
-  
-  case LevelDebug:
-    return "[DEBUG]"
-  }
+	switch level {
+	case LevelInfo:
+		return "[INFO]"
 
-  return "undefined"
+	case LevelDebug:
+		return "[DEBUG]"
+	}
+
+	return "undefined"
 }
 
 // converts given logging output string to log level
-func AsLogLevel(LogLevel string) LogLevel {
-  switch LogLevel {
-  case "info":
-    return LevelInfo
-  
-  case "debug":
-    return LevelDebug
-  }
+// func AsLogLevel(LogLevel string) LogLevel {
+//   switch LogLevel {
+//   case "info":
+//     return LevelInfo
+//
+//   case "debug":
+//     return LevelDebug
+//   }
+//
+//   return LogLevel(-1)
+// }
 
-  return LogLevel(-1)
+type User struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
 }
 
 // user session
 type Session struct {
-  ID string
-  User User
-  Created time.time
-  IsLoggedIn bool
+	ID         string
+	User       User
+	Created    time.Time
+	IsLoggedIn bool
 }
 
 // holds sessions
 type SessionManager struct {
-  Name string
-  Session Session
-  TTL int64
+	Name    string
+	Session Session
+	TTL     int64
 }
 
 // user assigned to ticket
 type Assignee struct {
-  ID string `json:"id`
-  Name string `json:"name`
-  Username string `json:"username`
-  Email string `json:"email`
-  Hash string `json:"hash`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Hash     string `json:"hash"`
 }
 
 type Status int
 
 const (
-  Open Status = iota
-  Pending
-  OnHold
-  Solved
+	New Status = iota
+	Open
+	Pending
+	OnHold
+	Solved
 )
-
-type Ticket struct {
-  ID string `json:"id"`
-  Subject string `json:"subject"`
-  Status Status `json:"status"`
-  User User `json:"user"`
-  Requester string `json:"requester"`
-}
-
-type Entry struct {
-  Text string `json:"text"`
-  User string `json:"user"`
-  Date time.Time `json:"date"`
-  Internal bool `json:"internal"`
-}
 
 // converts ticket status to description (string output)
 func (status Status) String() string {
-  switch status {
-  case Open:
-    return "Open"
+	switch status {
+	case New:
+		return "New"
 
-  case Pending:
-    return "Pending"
+	case Open:
+		return "Open"
 
-  case OnHold:
-    return "On Hold"
+	case Pending:
+		return "Pending"
 
-  case Solved:
-    return "Solved"
-  }
+	case OnHold:
+		return "On Hold"
 
-  return "Status not Defined"
+	case Solved:
+		return "Solved"
+	}
+
+	return "Status not Defined"
+}
+
+type Ticket struct {
+	ID        string  `json:"id"`
+	Subject   string  `json:"subject"`
+	Status    Status  `json:"status"`
+	User      User    `json:"user"`
+	Requester string  `json:"requester"`
+	Entries   []Entry `json:"entries"`
+}
+
+type Entry struct {
+	Text     string    `json:"text"`
+	User     string    `json:"user"`
+	Time     time.Time `json:"time"`
+	Internal bool      `json:"internal"`
 }
 
 // an email for a ticket entry
 type Email struct {
-  ID string `json:"id"`
-  From string `json:"from"`
-  To string `json:"to"`
-  Subject string `json:"subject"`
-  Message string `json:"message"`
+	ID      string `json:"id"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Subject string `json:"subject"`
+	Message string `json:"message"`
 }
 
 // key:value mappings for the mail API
@@ -152,14 +184,14 @@ type EmailJSONMap map[string]interface{}
 
 // converts command to string output
 func (c Command) String() string {
-  return strconv.Itoa(int(c))
+	return strconv.Itoa(int(c))
 }
 
 // CLI command to interact with mail
 type Command int
 
 const (
-  Fetch Command = iota
-  Submit
-  Exit
+	Fetch Command = iota
+	Submit
+	Exit
 )

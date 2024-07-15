@@ -6,7 +6,7 @@ const (
   ServerPort uint16 = 5000
   ServerTickets string = "./store/tickets"
   ServerUsers string = "./store/users/users.json"
-  ServerEmails string = "./store/mails"
+  ServerEmails string = "./store/emails"
 
   LogVerbose bool = false
   LogLevel string = "info"
