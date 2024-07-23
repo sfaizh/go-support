@@ -1,0 +1,129 @@
+// // Ticket Management System
+// // By Faizan Hussain
+// // Package implements tcp module used for sending and recieving messages from the client server
+//
+// package tcpserver
+//
+// import (
+// 	"bufio"
+// 	"fmt"
+// 	"github.com/sfaizh/ticket-management-system/internal/structs"
+// 	"golang.org/x/term"
+// 	"io"
+// 	"net"
+// )
+//
+// // define local type backed by structs.Server
+// type Server structs.Server
+//
+// // defines the server
+// func NewServer(listenAddr string) *Server {
+// 	return &Server{
+// 		ListenAddr: listenAddr,
+// 		QuitCh:     make(chan struct{}),
+// 		Msg:        make(chan structs.Message, 10),
+// 	}
+// }
+//
+// // starts the server
+// func (s *Server) Start() error {
+// 	ln, err := net.Listen("tcp", s.ListenAddr)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer ln.Close()
+// 	s.Ln = ln
+//
+// 	//start accepting connections
+// 	go s.acceptLoop()
+// 	//what does <- syntax mean? | this line seems to be closing all channels
+// 	<-s.QuitCh
+// 	//close message channel
+// 	close(s.Msg)
+//
+// 	return nil
+// }
+//
+// func (s *Server) acceptLoop() {
+// 	for {
+// 		conn, err := s.Ln.Accept()
+// 		if err != nil {
+// 			fmt.Println("accept error:", err)
+// 			continue
+// 		}
+// 		fmt.Println("new connection:", conn.RemoteAddr())
+// 		go s.readLoop(conn)
+// 	}
+// }
+//
+// // func (s *Server) CLIPrompt(buffer *[]byte, conn net.Conn) {
+// // 	for {
+// // 		n, err := conn.Read(*buffer)
+// // 		if err != nil {
+// // 			fmt.Println("read error:", err)
+// // 			continue
+// // 		}
+// //
+// // 		s.Req <- structs.Request{
+// // 			Requester: (*buffer)[:n],
+// // 		}
+// //
+// // 		conn.Write([]byte("Message sent"))
+// // 	}
+// // }
+//
+// func (s *Server) readLoop(conn net.Conn) error {
+// 	defer conn.Close()
+//
+// 	conn.Write([]byte("***** Ticket management system by Faizan *****\n"))
+//
+// 	// buf := make([]byte, 2048)
+// 	// requester := make([]byte, 2048)
+// 	// subject := make([]byte, 2048)
+// 	// text := make([]byte, 2048)
+//
+// 	// for {
+// 	// n, err := conn.Read(buf)
+// 	// if err != nil {
+// 	// 	fmt.Println("read error:", err)
+// 	// 	continue
+// 	// }
+//
+// 	r := bufio.NewReader(conn)
+// 	w := bufio.NewWriter(conn)
+// 	rw := bufio.NewReadWriter(r, w)
+// 	term := term.NewTerminal(rw, "")
+//
+// 	term.SetPrompt(string(term.Escape.Red) + "> " + string(term.Escape.Reset))
+// 	rePrefix := string(term.Escape.Cyan) + "Message to server:" + string(term.Escape.Reset)
+// 	for {
+// 		line, err := term.ReadLine()
+// 		if err == io.EOF {
+// 			return nil
+// 		}
+// 		if err != nil {
+// 			return err
+// 		}
+// 		if line == "" {
+// 			continue
+// 		}
+// 		fmt.Fprintln(term, rePrefix, line)
+//
+// 		s.Req <- structs.Request{
+// 			Requester: line,
+// 		}
+//
+// 		conn.Write([]byte("Message sent"))
+// 		w.Flush()
+// 	}
+// 	// s.CLIPrompt(&requester, conn)
+// 	// CLIPrompt(&subject, conn)
+// 	// CLIPrompt(&text, conn)
+//
+// 	//read input into message channel
+// 	// s.Msg <- structs.Message{
+// 	// 	From:    conn.RemoteAddr().String(),
+// 	// 	Payload: buf[:n],
+// 	// }
+// 	// }
+// }

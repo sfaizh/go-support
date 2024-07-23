@@ -26,8 +26,8 @@ type ServerConfig struct {
 
 type Request struct {
 	Requester []byte
-	// Subject   string
-	// Text      string
+	Subject   []byte
+	Text      []byte
 }
 
 type Message struct {
@@ -41,6 +41,10 @@ type Server struct {
 	QuitCh     chan struct{}
 	Msg        chan Message
 	Req        chan Request
+}
+
+type APIServer struct {
+	ListenAddr string
 }
 
 // provides the CLI config parameters set on startup

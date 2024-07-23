@@ -7,6 +7,7 @@ package tcpserver
 import (
 	"fmt"
 	"github.com/sfaizh/ticket-management-system/internal/structs"
+	"io"
 	"net"
 )
 
@@ -19,6 +20,7 @@ func NewServer(listenAddr string) *Server {
 		ListenAddr: listenAddr,
 		QuitCh:     make(chan struct{}),
 		Msg:        make(chan structs.Message, 10),
+		Req:        make(chan structs.Request, 10),
 	}
 }
 
@@ -53,25 +55,42 @@ func (s *Server) acceptLoop() {
 	}
 }
 
+func (s *Server) CLIPrompt(buffer *[]byte, conn net.Conn, prompt string) []byte {
+	conn.Write([]byte(prompt))
+	n, err := conn.Read(*buffer)
+
+	if err == io.EOF {
+		return nil
+	}
+	if err != nil {
+		fmt.Println("read error:", err)
+		return nil
+	}
+
+	return (*buffer)[:n]
+}
+
 func (s *Server) readLoop(conn net.Conn) {
 	defer conn.Close()
 
-	conn.Write([]byte("***** Ticket management system by Faizan *****"))
+	conn.Write([]byte("***** Ticket management system by Faizan *****\n"))
 
-	buf := make([]byte, 2048)
 	for {
-		n, err := conn.Read(buf)
-		if err != nil {
-			fmt.Println("read error:", err)
-			continue
-		}
+		conn.Write([]byte("***** Submit a new Ticket *****\n"))
+		// buf := make([]byte, 2048)
+		requester := make([]byte, 2048)
+		subject := make([]byte, 2048)
+		text := make([]byte, 2048)
 
-		//read input into message channel
-		s.Msg <- structs.Message{
-			From:    conn.RemoteAddr().String(),
-			Payload: buf[:n],
-		}
+		s.CLIPrompt(&requester, conn, "Email address: ")
+		s.CLIPrompt(&subject, conn, "Subject: ")
+		s.CLIPrompt(&text, conn, "Description: ")
 
-		conn.Write([]byte("Message sent"))
+		s.Req <- structs.Request{
+			Requester: requester,
+			Subject:   subject,
+			Text:      text,
+		}
+		conn.Write([]byte("Thank you for your request!\n"))
 	}
 }
