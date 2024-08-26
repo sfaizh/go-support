@@ -8,8 +8,10 @@ import (
 	"github.com/sfaizh/ticket-management-system/internal/structs"
 )
 
+type Ticket structs.Ticket
+
 // Create a new ticket - requester is an email address
-func CreateTicket(requester, subject, text string) structs.Ticket {
+func CreateTicket(requester, subject, text string) (*Ticket, error) {
 	// create new entry
 	entry := structs.Entry{
 		Time: time.Now(),
@@ -23,12 +25,12 @@ func CreateTicket(requester, subject, text string) structs.Ticket {
 	// write to file
 
 	// return the ticket
-	return structs.Ticket{
+	return &Ticket{
 		ID:        "0",
 		Subject:   subject,
 		Status:    structs.New,
 		User:      structs.User{},
 		Requester: requester,
 		Entries:   entries,
-	}
+	}, nil
 }

@@ -43,10 +43,6 @@ type Server struct {
 	Req        chan Request
 }
 
-type APIServer struct {
-	ListenAddr string
-}
-
 // provides the CLI config parameters set on startup
 type CLIConfig struct {
 	Host string
@@ -159,12 +155,13 @@ func (status Status) String() string {
 }
 
 type Ticket struct {
-	ID        string  `json:"id"`
-	Subject   string  `json:"subject"`
-	Status    Status  `json:"status"`
-	User      User    `json:"user"`
-	Requester string  `json:"requester"`
-	Entries   []Entry `json:"entries"`
+	ID      string `json:"id"`
+	Subject string `json:"subject"`
+	// Status    Status    `json:"status"`
+	// User      User      `json:"user"`
+	Requester string `json:"requester"`
+	// Entries   []Entry   `json:"entries"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Entry struct {
