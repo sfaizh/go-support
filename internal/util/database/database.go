@@ -3,10 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"time"
-
 	_ "github.com/lib/pq"
 	"github.com/sfaizh/ticket-management-system/internal/structs"
+	"time"
 )
 
 // type Ticket structs.Ticket
@@ -43,22 +42,25 @@ func (s *dbStore) Init() error {
 }
 
 func (s *dbStore) createTicketTable() error {
-	q := `create table if not exists ticket (
-    id serial primary key,
-    subject varchar(100),
-    requester varchar(100),
-    created_at timestamp
-  )`
-
 	// q := `create table if not exists ticket (
 	//    id serial primary key,
 	//    subject varchar(100),
-	//    statusid serial key,
-	//    userid serial key,
 	//    requester varchar(100),
-	//    entryid serial key,
 	//    created_at timestamp
 	//  )`
+
+	q := `create table if not exists ticket (
+	   id serial primary key,
+	   subject varchar(100),
+	   statusid integer,
+	   userid integer,
+	   requester varchar(100),
+	   entryid integer,
+	   created_at timestamp,
+     foreign key (statusid) references status(id),
+     foreign key (userid) references "users"(id),
+     foreign key (entryid) references entries(id)
+	 )`
 
 	_, err := s.db.Exec(q)
 	return err
@@ -84,39 +86,40 @@ func NewTicket(requester, subject, text string) (*Ticket, error) {
 	// }
 
 	// create new entry
-	// entry := structs.Entry{
-	// 	Time: time.Now(),
-	// 	User: requester,
-	// 	Text: text,
-	// }
+	entry := structs.Entry{
+		Time: time.Now().UTC(),
+		User: requester,
+		Text: text,
+	}
 
-	// var entries []structs.Entry
-	// entries = append(entries, entry)
+	var entries []structs.Entry
+	entries = append(entries, entry)
 
 	// write to file
 
 	// return the ticket
 	return &Ticket{
-		Subject: subject,
-		// Status:  structs.New,
-		// User:      structs.User{},
+		Subject:   subject,
+		Status:    structs.New,
+		User:      structs.User{},
 		Requester: requester,
-		// Entries:   entries,
+		Entries:   entries,
 		CreatedAt: time.Now().UTC(),
 	}, nil
 }
 
 func (s *dbStore) CreateTicket(t *Ticket) error {
 	q := `insert into ticket
-  (subject, requester, created_at)
-  values ($1, $2, $3)`
+  (subject, statusid, requester, userid, entryid, created_at)
+  values ($1, $2, $3, $4, $5, $6)`
 
 	_, err := s.db.Query(
 		q,
 		t.Subject,
+		t.Status,
 		t.Requester,
-		// t.Requester,
-		// t.Entries,
+		t.User,
+		t.Entries,
 		t.CreatedAt,
 	)
 
@@ -167,10 +170,10 @@ func buildTicketsList(rows *sql.Rows) (*Ticket, error) {
 	err := rows.Scan(
 		&ticket.ID,
 		&ticket.Subject,
-		// &ticket.Status,
-		// &ticket.User,
+		&ticket.Status,
+		&ticket.User,
 		&ticket.Requester,
-		// &ticket.Entries,
+		&ticket.Entries,
 		&ticket.CreatedAt,
 	)
 

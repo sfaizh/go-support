@@ -3,10 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
-
 	"github.com/sfaizh/ticket-management-system/internal/util/api"
 	"github.com/sfaizh/ticket-management-system/internal/util/database"
+	"log"
 )
 
 type Storage database.Storage
@@ -37,7 +36,8 @@ func SeedTicket(store Storage, requester, subject, description string) *database
 }
 
 func SeedTickets(s Storage) {
-	SeedTicket(s, "faizan", "Support request ticket", "I need help setting up APM for Node.js.")
+	SeedTicket(s, "faizan@gmail.com", "Support request ticket", "I need help setting up APM for Node.js.")
+	// need to seed the rest of the data - status, users, entries
 }
 
 func main() {
@@ -46,7 +46,7 @@ func main() {
 	// server := tcpserver.NewServer(":3000")
 
 	// Seed setup for database
-	seed := flag.Bool("seed", false, "seed the db")
+	seed := flag.Bool("seed", true, "seed the db")
 	flag.Parse()
 
 	// Create new db

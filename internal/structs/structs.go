@@ -155,12 +155,12 @@ func (status Status) String() string {
 }
 
 type Ticket struct {
-	ID      string `json:"id"`
-	Subject string `json:"subject"`
-	// Status    Status    `json:"status"`
-	// User      User      `json:"user"`
-	Requester string `json:"requester"`
-	// Entries   []Entry   `json:"entries"`
+	ID        string    `json:"id"`
+	Subject   string    `json:"subject"`
+	Status    Status    `json:"status"`
+	User      User      `json:"user"`
+	Requester string    `json:"requester"`
+	Entries   []Entry   `json:"entries"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 

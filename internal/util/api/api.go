@@ -3,12 +3,11 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/sfaizh/ticket-management-system/internal/util/database"
 	"log"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
-	"github.com/sfaizh/ticket-management-system/internal/util/database"
 )
 
 type Storage database.Storage
@@ -33,7 +32,6 @@ func (s *APIServer) Run() error {
 	router.HandleFunc("/tickets/{id}", handleHTTP(s.handleGetTicketByID))
 	router.HandleFunc("/create", handleHTTP(s.handleCreateTicket))
 	log.Println("API server running on port:", s.listenAddr)
-
 	http.ListenAndServe(s.listenAddr, router)
 
 	return nil
