@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Storage database.Storage
@@ -29,9 +30,9 @@ func (s *APIServer) Run() error {
 
 	router.HandleFunc("/", handleHTTP(s.handleLanding))
 	router.HandleFunc("/tickets", handleHTTP(s.handleGetTickets))
-	router.HandleFunc("/tickets/{id}", handleHTTP(s.handleGetTicketByID))
-	router.HandleFunc("/create", handleHTTP(s.handleCreateTicket))
-	log.Println("API server running on port:", s.listenAddr)
+	// router.HandleFunc("/tickets/{id}", handleHTTP(s.handleGetTicketByID))
+	// router.HandleFunc("/create", handleHTTP(s.handleCreateTicket))
+	log.Println("API rebuilt server running on port:", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
 
 	return nil
@@ -74,12 +75,15 @@ func (s *APIServer) handleCreateTicket(w http.ResponseWriter, r *http.Request) e
 		return err
 	}
 
-	ticket, err := database.NewTicket(req.Requester, req.Subject, req.Text)
-	if err != nil {
-		return err
+	// ticket, err := database.NewTicket(req.Requester, req.Subject, req.Text)
+	ticket := &database.Ticket{
+		Subject:   req.Subject,
+		Requester: req.Requester,
+		Entries:   req.Entries,
+		CreatedAt: time.Now().UTC(),
 	}
 
-	if err := s.store.CreateTicket(ticket); err != nil {
+	if err := s.store.StoreTicket(ticket); err != nil {
 		return err
 	}
 

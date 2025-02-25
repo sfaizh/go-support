@@ -3,9 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/sfaizh/ticket-management-system/internal/structs"
 	"github.com/sfaizh/ticket-management-system/internal/util/api"
 	"github.com/sfaizh/ticket-management-system/internal/util/database"
 	"log"
+	"time"
 )
 
 type Storage database.Storage
@@ -20,13 +22,15 @@ type Storage database.Storage
 // )
 
 // Seed tickets
-func SeedTicket(store Storage, requester, subject, description string) *database.Ticket {
-	t, err := database.NewTicket(requester, subject, description)
-	if err != nil {
-		log.Fatal(err)
+func SeedTicket(store Storage, requester, subject, description string, entries []structs.Entry) *database.Ticket {
+	t := &database.Ticket{
+		Subject:   subject,
+		Requester: requester,
+		Entries:   entries,
+		CreatedAt: time.Now().UTC(),
 	}
 
-	if err := store.CreateTicket(t); err != nil {
+	if err := store.StoreTicket(t); err != nil {
 		log.Fatal(err)
 	}
 
@@ -36,15 +40,26 @@ func SeedTicket(store Storage, requester, subject, description string) *database
 }
 
 func SeedTickets(s Storage) {
-	SeedTicket(s, "faizan@gmail.com", "Support request ticket", "I need help setting up APM for Node.js.")
-	// need to seed the rest of the data - status, users, entries
+	entries := []structs.Entry{
+		{
+			TicketID: "1",
+			Text:     "I need some help with this go code",
+			User:     "TestUser",
+			Time:     time.Now().UTC(),
+			Internal: false,
+		},
+		{
+			TicketID: "1",
+			Text:     "Some other support ticket request",
+			User:     "TestUser2",
+			Time:     time.Now().UTC(),
+			Internal: false,
+		},
+	}
+	SeedTicket(s, "faizan@gmail.com", "Support request ticket", "I need help setting up APM for Node.js.", entries)
 }
 
 func main() {
-	// var testTicket = ticket.CreateTicket("example-customer@test.com", "New test support request", "Hi, i need support!")
-	// fmt.Println(testTicket)
-	// server := tcpserver.NewServer(":3000")
-
 	// Seed setup for database
 	seed := flag.Bool("seed", true, "seed the db")
 	flag.Parse()

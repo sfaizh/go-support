@@ -5,16 +5,17 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/sfaizh/ticket-management-system/internal/structs"
-	"time"
 )
 
 // type Ticket structs.Ticket
 type Ticket structs.Ticket
 
+// type Entry []structs.Entry
+
 type Storage interface {
 	GetTickets() ([]*Ticket, error)
 	GetTicketByID(int) (*Ticket, error)
-	CreateTicket(*Ticket) error
+	StoreTicket(*Ticket) error
 }
 
 type dbStore struct {
@@ -42,35 +43,51 @@ func (s *dbStore) Init() error {
 }
 
 func (s *dbStore) createTicketTable() error {
+	q1 := `CREATE TABLE IF NOT EXISTS ticket (
+    id SERIAL PRIMARY KEY,
+    subject VARCHAR(100),
+    requester VARCHAR(100),
+    created_at TIMESTAMP
+);`
+
+	q2 := `CREATE TABLE IF NOT EXISTS ticket_entry (
+    id SERIAL PRIMARY KEY,
+    ticket_id INTEGER REFERENCES ticket(id),
+    text TEXT,
+    "user" VARCHAR(100),
+    "time" TIMESTAMP,
+    internal BOOLEAN
+);`
+
+	// Then execute q1 and q2 separately:
+	if _, err := s.db.Exec(q1); err != nil {
+		// handle error
+	}
+	if _, err := s.db.Exec(q2); err != nil {
+		// handle error
+	}
 	// q := `create table if not exists ticket (
 	//    id serial primary key,
 	//    subject varchar(100),
+	//    statusid integer,
+	//    userid integer,
 	//    requester varchar(100),
-	//    created_at timestamp
+	//    entryid integer,
+	//    created_at timestamp,
+	//     foreign key (statusid) references status(id),
+	//     foreign key (userid) references "users"(id),
+	//     foreign key (entryid) references entries(id)
 	//  )`
 
-	q := `create table if not exists ticket (
-	   id serial primary key,
-	   subject varchar(100),
-	   statusid integer,
-	   userid integer,
-	   requester varchar(100),
-	   entryid integer,
-	   created_at timestamp,
-     foreign key (statusid) references status(id),
-     foreign key (userid) references "users"(id),
-     foreign key (entryid) references entries(id)
-	 )`
-
-	_, err := s.db.Exec(q)
-	return err
+	return nil
 }
 
 // Ticket functionality
 type CreateTicketRequest struct {
-	Requester string `json:"requester"`
-	Subject   string `json:"subject"`
-	Text      string `json:"text"`
+	Requester string          `json:"requester"`
+	Subject   string          `json:"subject"`
+	Text      string          `json:"text"`
+	Entries   []structs.Entry `json:"entries"`
 }
 
 // Validate
@@ -78,53 +95,27 @@ type CreateTicketRequest struct {
 // 	return bcrypt.CompareHashAndPassword([]byte(t.EncryptedPassword), []byte(p)) == nil
 // }
 
-// Create a new ticket - requester is an email address
-func NewTicket(requester, subject, text string) (*Ticket, error) {
-	// encryptedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	// if err != nil {
-	// 	return nil, err
-	// }
+func (s *dbStore) StoreTicket(t *Ticket) error {
+	// there should be a link to entries here in the form of a list of varchar(100)
+	q1 := `insert into ticket
+  (subject, requester, created_at)
+  values ($1, $2, $3)
+  returning id`
 
-	// create new entry
-	entry := structs.Entry{
-		Time: time.Now().UTC(),
-		User: requester,
-		Text: text,
+	q2 := `insert into ticket_entry
+  (ticket_id, text, "user", "time", internal)
+  values ($1, $2, $3, $4, $5)`
+
+	// Then execute q1 and q2 separately:
+	// Use Scan to store id from ticket into t.ID
+	if err := s.db.QueryRow(q1, t.Subject, t.Requester, t.CreatedAt).Scan(&t.ID); err != nil {
+		// handle error
 	}
 
-	var entries []structs.Entry
-	entries = append(entries, entry)
-
-	// write to file
-
-	// return the ticket
-	return &Ticket{
-		Subject:   subject,
-		Status:    structs.New,
-		User:      structs.User{},
-		Requester: requester,
-		Entries:   entries,
-		CreatedAt: time.Now().UTC(),
-	}, nil
-}
-
-func (s *dbStore) CreateTicket(t *Ticket) error {
-	q := `insert into ticket
-  (subject, statusid, requester, userid, entryid, created_at)
-  values ($1, $2, $3, $4, $5, $6)`
-
-	_, err := s.db.Query(
-		q,
-		t.Subject,
-		t.Status,
-		t.Requester,
-		t.User,
-		t.Entries,
-		t.CreatedAt,
-	)
-
-	if err != nil {
-		return err
+	for _, entry := range t.Entries {
+		if _, err := s.db.Exec(q2, t.ID, entry.Text, entry.User, entry.Time, entry.Internal); err != nil {
+			// handle error
+		}
 	}
 
 	return nil
@@ -164,16 +155,15 @@ func (s *dbStore) GetTicketByID(id int) (*Ticket, error) {
 	return nil, fmt.Errorf("Ticket ID %d not found", id)
 }
 
-// needs adjustment - database does not support entries or user object, these should be changed
+// entries are stored in a normalised fashion
 func buildTicketsList(rows *sql.Rows) (*Ticket, error) {
 	ticket := new(Ticket)
 	err := rows.Scan(
 		&ticket.ID,
 		&ticket.Subject,
-		&ticket.Status,
-		&ticket.User,
+		// &ticket.Status,
+		// &ticket.User,
 		&ticket.Requester,
-		&ticket.Entries,
 		&ticket.CreatedAt,
 	)
 

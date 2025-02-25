@@ -155,16 +155,18 @@ func (status Status) String() string {
 }
 
 type Ticket struct {
-	ID        string    `json:"id"`
-	Subject   string    `json:"subject"`
-	Status    Status    `json:"status"`
-	User      User      `json:"user"`
+	ID      string `json:"id"`
+	Subject string `json:"subject"`
+	// Status    Status    `json:"status"`
+	// this needs to be amended so it takes User and not string
+	User      string    `json:"user"`
 	Requester string    `json:"requester"`
 	Entries   []Entry   `json:"entries"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
 type Entry struct {
+	TicketID string    `json:"ticket_id"`
 	Text     string    `json:"text"`
 	User     string    `json:"user"`
 	Time     time.Time `json:"time"`
