@@ -159,7 +159,6 @@ type Ticket struct {
 	Subject string `json:"subject"`
 	// Status    Status    `json:"status"`
 	// this needs to be amended so it takes User and not string
-	User      string    `json:"user"`
 	Requester string    `json:"requester"`
 	Entries   []Entry   `json:"entries"`
 	CreatedAt time.Time `json:"createdAt"`

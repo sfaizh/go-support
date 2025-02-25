@@ -7,15 +7,14 @@ import (
 	"github.com/sfaizh/ticket-management-system/internal/structs"
 )
 
-// type Ticket structs.Ticket
 type Ticket structs.Ticket
-
-// type Entry []structs.Entry
+type Entry structs.Entry
 
 type Storage interface {
 	GetTickets() ([]*Ticket, error)
 	GetTicketByID(int) (*Ticket, error)
 	StoreTicket(*Ticket) error
+	GetTicketEntries(int) ([]*Entry, error)
 }
 
 type dbStore struct {
@@ -121,8 +120,6 @@ func (s *dbStore) StoreTicket(t *Ticket) error {
 	return nil
 }
 
-// error here
-// If err!= nil then res==nil and res.Body panics.
 func (s *dbStore) GetTickets() ([]*Ticket, error) {
 	rows, err := s.db.Query("select * from ticket")
 	if err != nil {
@@ -155,14 +152,39 @@ func (s *dbStore) GetTicketByID(id int) (*Ticket, error) {
 	return nil, fmt.Errorf("Ticket ID %d not found", id)
 }
 
-// entries are stored in a normalised fashion
+func (s *dbStore) GetTicketEntries(id int) ([]*Entry, error) {
+	// migrate to buildEntriesList
+	q := `select ticket_id, text, "user", "time", internal
+        from ticket_entry
+        where ticket_id = $1`
+	rows, err := s.db.Query(q, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var entries []*Entry
+	for rows.Next() {
+		e := new(Entry)
+		if err := rows.Scan(&e.TicketID, &e.Text, &e.User, &e.Time, &e.Internal); err != nil {
+			return nil, err
+		}
+		entries = append(entries, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+// entries are stored in a separate table - it's still returned in the getter but is an empty list - you can query entry by ticket_id
 func buildTicketsList(rows *sql.Rows) (*Ticket, error) {
 	ticket := new(Ticket)
 	err := rows.Scan(
 		&ticket.ID,
 		&ticket.Subject,
 		// &ticket.Status,
-		// &ticket.User,
 		&ticket.Requester,
 		&ticket.CreatedAt,
 	)

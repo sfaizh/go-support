@@ -61,7 +61,7 @@ func SeedTickets(s Storage) {
 
 func main() {
 	// Seed setup for database
-	seed := flag.Bool("seed", true, "seed the db")
+	seed := flag.Bool("seed", false, "seed the db")
 	flag.Parse()
 
 	// Create new db

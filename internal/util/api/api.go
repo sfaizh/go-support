@@ -30,8 +30,9 @@ func (s *APIServer) Run() error {
 
 	router.HandleFunc("/", handleHTTP(s.handleLanding))
 	router.HandleFunc("/tickets", handleHTTP(s.handleGetTickets))
-	// router.HandleFunc("/tickets/{id}", handleHTTP(s.handleGetTicketByID))
-	// router.HandleFunc("/create", handleHTTP(s.handleCreateTicket))
+	router.HandleFunc("/tickets/{id}", handleHTTP(s.handleGetTicketByID))
+	router.HandleFunc("/entries/{id}", handleHTTP(s.handleGetTicketEntries))
+	router.HandleFunc("/create", handleHTTP(s.handleCreateTicket))
 	log.Println("API rebuilt server running on port:", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
 
@@ -49,6 +50,22 @@ func (s *APIServer) handleGetTickets(w http.ResponseWriter, r *http.Request) err
 	}
 
 	return fmt.Errorf("Method no allowed %s", r.Method)
+}
+
+func (s *APIServer) handleGetTicketEntries(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == "GET" {
+		id, err := getID(r)
+		if err != nil {
+			return err
+		}
+		entries, err := s.store.GetTicketEntries(id)
+		if err != nil {
+			return err
+		}
+
+		return ToJSON(w, http.StatusOK, entries)
+	}
+	return fmt.Errorf("method not allowed %s", r.Method)
 }
 
 func (s *APIServer) handleGetTicketByID(w http.ResponseWriter, r *http.Request) error {
@@ -70,24 +87,27 @@ func (s *APIServer) handleGetTicketByID(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleCreateTicket(w http.ResponseWriter, r *http.Request) error {
-	req := new(database.CreateTicketRequest)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		return err
+	if r.Method == "POST" {
+		// build ticket here
+		// if i use database.Ticket, it will have extra fields User, Entries
+		var t database.Ticket
+
+		// get fields from body
+		if err := json.NewDecoder(r.Body).Decode(&t); err != nil {
+			return fmt.Errorf("Failed to decode JSON: %w", err)
+		}
+
+		t.CreatedAt = time.Now().UTC()
+
+		// store the ticket
+		if err := s.store.StoreTicket(&t); err != nil {
+			log.Fatal(err)
+		}
+
+		return ToJSON(w, http.StatusOK, t)
 	}
 
-	// ticket, err := database.NewTicket(req.Requester, req.Subject, req.Text)
-	ticket := &database.Ticket{
-		Subject:   req.Subject,
-		Requester: req.Requester,
-		Entries:   req.Entries,
-		CreatedAt: time.Now().UTC(),
-	}
-
-	if err := s.store.StoreTicket(ticket); err != nil {
-		return err
-	}
-
-	return ToJSON(w, http.StatusOK, ticket)
+	return fmt.Errorf("method not allowed %s", r.Method)
 }
 
 func (s *APIServer) handleLanding(w http.ResponseWriter, r *http.Request) error {
